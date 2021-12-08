@@ -1,0 +1,58 @@
+---
+title: "Anomally"
+output: html_document
+---
+
+```{r echo=FALSE}
+# installing package
+install.packages("anomalize") 
+
+
+install.packages("factoextra")
+library(factoextra)
+
+install.packages("anomalize")
+library(anomalize)
+library(tidyverse)
+library(anomalize)
+
+```
+```{r echo=FALSE}
+# loading our dataset
+df = read.csv('C:/Users/Morris/Downloads/Supermarket_Sales_Forecasting - Sales.csv')
+head(df)
+```
+
+```{r echo=FALSE}
+# Collect time series data
+
+tidyverse_cran_downloads
+```
+```{r echo=FALSE}
+anomaly_tb <- as_tibble(df)
+head(anomaly_tb)
+
+```
+```{r echo=FALSE}
+anomaly_tb <- anomaly_tb %>%
+                    tibbletime::as_tbl_time(index = Date)
+
+```
+
+```{r echo=FALSE}
+tidyverse_cran_downloads %>%
+    time_decompose(count) %>%
+    anomalize(remainder) %>%
+    time_recompose() %>%
+    plot_anomalies(time_recomposed = TRUE, ncol = 3, alpha_dots = 0.5)
+```
+
+
+
+
+
+
+
+
+
+

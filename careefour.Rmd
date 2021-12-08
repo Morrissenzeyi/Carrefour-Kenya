@@ -1,0 +1,257 @@
+---
+title: "carrefour_kenya"
+output: html_document
+---
+
+```{r echo=FALSE}
+## Installing packages
+
+
+library(dplyr)
+library(Rtsne)
+library(caret)
+library(corrplot)
+```
+
+```{r echo=FALSE}
+# loading the dataset
+df <- read.csv("C:/Users/Morris/Downloads/Supermarket_Dataset_1 - df Data.csv")
+
+#diplaying the data
+head(df)
+```
+
+```{r echo=FALSE}
+# Checking for the summary description of our data
+
+summary(df)
+```
+
+```{r echo=FALSE}
+# Checking the structure of our dataset
+
+str(df)
+```
+```{r echo=FALSE}
+### Concatenate the columns date and time
+ 
+df$Date_time = paste(df$Date,df$Time)
+
+# Converting the column into string
+df$Date_time = as.character(df$Date_time)
+```
+```{r echo=FALSE}
+# converting the Date_time column data type to date time
+
+df$Date_time = strptime(df$Date_time, "%m/%d/%Y %M:%S")
+
+```
+
+```{r echo=FALSE}
+# checking if the data type has been converted
+
+str(df$Date_time)
+```
+```{r echo=FALSE}
+dim(df)
+```
+```{r echo=FALSE}
+#checking for the names of the columns
+colnames(df)
+```
+```{r echo=FALSE}
+# dropping the invoice id column it won't be helpful
+df$invoice_id <- NULL
+```
+
+```{r echo=FALSE}
+# making the column names uniform
+names(df)[names(df) == "Branch"] <- "branch"
+names(df)[names(df) == "Customer.type"] <- "customer_type"
+names(df)[names(df) == "Gender"] <- "sex"
+names(df)[names(df) == "Product.line"] <- "product_line"
+names(df)[names(df) == "Unit.price"] <- "unit_price"
+names(df)[names(df) == "Quantity"] <- "quantity"
+names(df)[names(df) == "Tax"] <- "tax"
+names(df)[names(df) == "Date"] <- "date"
+names(df)[names(df) == "Time"] <- "time"
+names(df)[names(df) == "Payment"] <- "payment"
+names(df)[names(df) == "gross.margin.percentage"] <- "gross_margin_percentage"
+names(df)[names(df) == "gross.income"] <- "gross_income"
+names(df)[names(df) == "Rating"] <- "rating"
+names(df)[names(df) == "Total"] <- "total"
+```
+
+
+#Data cleaning
+```{r echo=FALSE}
+# Checking for Missing Values
+
+colSums(is.na(df))
+```
+
+
+```{r echo=FALSE}
+# Checking for duplicated data
+
+duplicates <- df[duplicated(df),]
+
+#duplicates
+
+anyDuplicated(df)
+```
+
+```{r echo=FALSE}
+# Plot a boxplot to help us visualise any existing outliers 
+boxplot(df$unit_price)
+```
+```{r echo=FALSE}
+boxplot(df$quantity)
+```
+
+```{r echo=FALSE}
+boxplot(df$tax)
+```
+
+```{r echo=FALSE}
+boxplot(df$cogs)
+```
+```{r echo=false}
+boxplot(df$gross_margin_percentage)
+```
+```{r echo=FALSE}
+boxplot(df$gross_income)
+```
+```{r echo=FALSE}
+boxplot(df$rating)
+```
+```{r echo=FALSE}
+boxplot(df$total)
+```
+# EDA
+## UNIVARIATE ANALYSIS
+```{r echo=FALSE}
+barplot(table(df$branch),
+       main = "Branch",
+       xlab= "Branch")
+```
+```{r echo=FALSE}
+barplot(table(df$customer_type),
+       main = "Customer Type",
+       xlab = "Customer Type")
+```
+
+```{r echo=FALSE}
+barplot(table(df$sex),
+       main = "Sex",
+       xlab = "Sex")
+```
+
+```{r echo=FALSE}
+# Selecting the numerical data 
+ 
+numericals <- df[,c(5,6,7,9:12)]
+head(numericals)
+```
+
+
+#PCA
+
+
+```{r echo=FALSE}
+#encoding the categorical features
+df$branch <- as.integer(df$branch)
+df$customer_type <- as.integer(df$customer_type)
+df$sex <- as.integer(df$sex)
+df$product_line  <- as.integer(df$product_line)
+df$payment <- as.integer(df$payment)
+df$date <- as.integer(df$payment)
+df$time <- as.integer(df$time)
+```
+       
+```{r echo=FALSE}
+# removing constant/zero column 
+names(df[,!apply(df, MARGIN = 2, function(x) max(x, na.rm = TRUE) == min(x, na.rm = TRUE))])
+```
+
+```{r echo=FALSE}
+# Drop the columns as they result to error "stop"
+df <- subset(df, select = -c(gross_margin_percentage, date))
+```
+
+```{r echo=FALSE}
+df.pca <- prcomp(df[,c(5,6,7,9:12)], center = TRUE, scale. = TRUE)
+summary(df.pca)
+
+```
+```{r echo=FALSE}
+str(df.pca)
+```
+```{r echo=FALSE}
+plot(df.pca, type="l")
+```
+ pca 1 explains most of our total variances
+
+```{r echo=FALSE}
+install.packages("devtools",dependencies=TRUE)
+library(devtools)
+install_github("vqv/ggbiplot", force = TRUE)
+library(ggbiplot)
+ggbiplot(df.pca)
+```
+ 
+```{r echo=FALSE}
+# # Executing the algorithm on curated data
+
+tsne <- Rtsne(numericals, dims =2, perplexity = 30, verbosity = TRUE,
+      max_iter = 500)
+
+# getting the time it takes to execute
+
+exeTimeTsne <- system.time(Rtsne(numericals, dims = 2, perplexity = 30,
+verbose = TRUE, max_iter = 500))
+```
+```{r echo=FALSE}
+# Curating the database for analysis 
+# 
+labels <- df$product_line
+df$product_line<-as.factor(df$product_line)
+
+# For plotting
+#
+colors = rainbow(length(df$product_line))
+names(colors) = unique(df$product_line)
+# Plotting our graph and closely examining the graph
+
+plot(tsne$Y, t = 'n', main = "tnse")
+text(tsne$Y, labels =df$product_line, col = "magenta")
+```
+# Feature selection
+
+```{r echo=FALSE}
+# finding the correlation matrix
+
+correlationMatrix <- cor(numericals)
+```
+
+```{r echo=FALSE}
+# Find attributes that are highly correlated
+
+highlyCorrelated <- findCorrelation(correlationMatrix, cutoff=0.75)
+```
+
+```{r echo=FALSE}
+# Highly correlated attributes
+# ---
+# 
+highlyCorrelated
+
+names(numericals[,highlyCorrelated])
+```
+
+```{r echo=FALSE}
+# Removing Redundant Features 
+# ---
+# 
+drop <-numericals[-highlyCorrelated]
+```

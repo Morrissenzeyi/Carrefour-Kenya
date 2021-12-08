@@ -1,0 +1,108 @@
+---
+title: "analysis"
+output: html_document
+---
+
+```{r echo=FALSE}
+#  install the library 
+
+install.packages("arules")
+library(arules)
+```
+
+```{r echo=FALSE}
+# Loading our transactions dataset from our csv file
+
+path <-"C:/Users/Morris/Downloads/Supermarket_Sales_Dataset II.csv"
+
+Transactions <- read.transactions(path)
+Transactions
+```
+```{r echo=FALSE}
+# Previewing our first 5 transactions
+#
+inspect(Transactions[1:5])
+```
+
+```{r echo=FALSE}
+# summary of the transaction dataset
+summary(Transactions)
+```
+
+```{r echo=FALSE}
+# Exploring the frequency of some articles 
+
+
+itemFrequency(Transactions[, 8:10],type = "absolute")
+round(itemFrequency(Transactions[, 8:10],type = "relative")*100,2)
+```
+
+```{r echo=FALSE}
+# Displaying top 10 most common items in the transactions dataset 
+
+ 
+par(mfrow = c(1, 2))
+```
+
+```{r echo=FALSE}
+# plot the frequency of items
+itemFrequencyPlot(Transactions, topN = 10)
+itemFrequencyPlot(Transactions, support = 0.1)
+```
+
+```{r echo=FALSE}
+# Building a model based on association rules 
+# We use Min Support as 0.001 and confidence as 0.8
+
+rules <- apriori (Transactions, parameter = list(supp = 0.001, conf = 0.8))
+rules
+```
+
+```{r echo=FALSE}
+# Building a apriori model 
+rules2 <- apriori (Transactions,parameter = list(supp = 0.002, conf = 0.8)) 
+
+# Building apriori model
+rules3 <- apriori (Transactions, parameter = list(supp = 0.001, conf = 0.6)) 
+
+rules2
+
+rules3
+```
+```{r echo=FALSE}
+# We can perform an exploration of our model
+summary(rules)
+```
+
+```{r echo=FALSE}
+# Observing rules built in our model i.e. first 5 model rules
+
+inspect(rules[1:15])
+```
+```{r echo=FALSE}
+# Ordering these rules by a criteria
+rules<-sort(rules, by="confidence", decreasing=TRUE)
+inspect(rules[1:5])
+```
+```{r echo=FALSE}
+ 
+# we could create a subset of rules concerning these products
+yogurt <- subset(rules, subset = rhs %pin% "yogurt")
+ 
+# Then order by confidence
+yogurt<-sort(yogurt, by="confidence", decreasing=TRUE)
+inspect(yogurt[1:5])
+```
+```{r echo=FALSE}
+# determining items that customers might buy 
+# who have previously bought yogurt?
+
+yogurt <- subset(rules, subset = lhs %pin% "yogurt")
+
+# Order by confidence
+yogurt<-sort(yogurt, by="confidence", decreasing=TRUE)
+
+# inspect top 5
+inspect(yogurt[15:19])
+```
+
